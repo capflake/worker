@@ -90,6 +90,47 @@ jobs:
           git add --all
           git commit -m "[AUTO] update news $(date)"
           git push
+  etl_earnings:
+    name: "Load earnings"
+    runs-on: ubuntu-latest
+    needs: etl_assets
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/cap-daemon
+          token: ${{ secrets.GH_PAT }}
+          path: cap-daemon
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/internal-assets
+          token: ${{ secrets.GH_PAT }}
+          path: internal-assets
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user pipenv
+      - name: Prepare internal-assets
+        run: |
+          mkdir -p internal-assets/earnings
+      - name: Prepare cap-daemon
+        run: |
+          cd cap-daemon
+          pipenv sync
+      - name: Load earnings
+        run: |
+          cd cap-daemon
+          bin/etl_earnings --target=../internal-assets/earnings --assets_txt=../internal-assets/assets.txt
+      - name: Commit changes
+        run: |
+          cd internal-assets
+          git config user.name capflake-bot
+          git config user.email capflake-bot@users.noreply.github.com
+          git add --all
+          git commit -m "[AUTO] update earnings $(date)"
+          git push
   etl_logo:
     name: "Load logo"
     runs-on: ubuntu-latest
