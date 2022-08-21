@@ -1,0 +1,55 @@
+name: "Load data"
+on:
+  # schedule:
+  #   # * is a special character in YAML so you have to quote this string
+  #   # Trigger every day at 08:15, 20:15
+  #   - cron: "15 5,17 * * *"
+  push:
+    branches:
+      - "master"
+jobs:
+  etl_assets:
+    name: "Load assets"
+    runs-on: ubuntu-latest
+    env:
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+      ALPACA_API_URL: ${{ secrets.ALPACA_API_URL }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/cap-daemon
+          token: ${{ secrets.GH_PAT }}
+          path: cap-daemon
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/internal-assets
+          token: ${{ secrets.GH_PAT }}
+          path: internal-assets
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user pipenv
+      - name: Prepare cap-daemon
+        run: |
+          cd cap-daemon
+          pipenv sync
+      - name: Prepare internal-assets
+        run: |
+          rm -rf internal-assets/assets
+          mkdir -p internal-assets/assets
+      - name: Load assets
+        run: |
+          cd cap-daemon
+          bin/etl_assets --target=../internal-assets/assets
+      - name: Commit changes
+        run: |
+          cd internal-assets
+          git config user.name capflake-bot
+          git config user.email capflake-bot@users.noreply.github.com
+          git add --all
+          git commit -m "[AUTO] update assets $(date)"
+          git push
