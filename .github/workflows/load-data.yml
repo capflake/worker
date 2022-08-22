@@ -93,7 +93,7 @@ jobs:
   etl_earnings:
     name: "Load earnings"
     runs-on: ubuntu-latest
-    needs: etl_assets
+    needs: [etl_assets, etl_news]
     steps:
       - uses: actions/checkout@v3
         with:
