@@ -47,7 +47,7 @@ jobs:
           git config user.name capflake-bot
           git config user.email capflake-bot@users.noreply.github.com
           git add --all
-          git commit -m "[AUTO] update assets $(date)"
+          git commit --allow-empty -m "[AUTO] update assets $(date)"
           git push
   etl_news:
     name: "Load news"
@@ -88,7 +88,7 @@ jobs:
           git config user.name capflake-bot
           git config user.email capflake-bot@users.noreply.github.com
           git add --all
-          git commit -m "[AUTO] update news $(date)"
+          git commit --allow-empty -m "[AUTO] update news $(date)"
           git push
   etl_earnings:
     name: "Load earnings"
@@ -129,7 +129,7 @@ jobs:
           git config user.name capflake-bot
           git config user.email capflake-bot@users.noreply.github.com
           git add --all
-          git commit -m "[AUTO] update earnings $(date)"
+          git commit --allow-empty -m "[AUTO] update earnings $(date)"
           git push
   etl_logo:
     name: "Load logo"
@@ -175,5 +175,5 @@ jobs:
           git config user.name capflake-bot
           git config user.email capflake-bot@users.noreply.github.com
           git add --all
-          git commit -m "[AUTO] update logo $(date)"
+          git commit --allow-empty -m "[AUTO] update logo $(date)"
           git push
