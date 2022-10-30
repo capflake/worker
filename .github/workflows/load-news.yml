@@ -1,6 +1,5 @@
 name: "Load news"
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 jobs:
   etl_news:
     name: "Load news"
