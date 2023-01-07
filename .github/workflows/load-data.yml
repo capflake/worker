@@ -176,3 +176,40 @@ jobs:
           git add --all
           git commit --allow-empty -m "[AUTO] update logo $(date)"
           git push
+  etl_db:
+    name: "Save data"
+    runs-on: ubuntu-latest
+    needs: [etl_assets, etl_earnings, etl_news, etl_logo]
+    env:
+      MONGODB_URL: ${{ secrets.MONGODB_URL }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/cap-daemon
+          token: ${{ secrets.GH_PAT }}
+          path: cap-daemon
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/internal-assets
+          token: ${{ secrets.GH_PAT }}
+          path: internal-assets
+      - uses: actions/checkout@v3
+        with:
+          repository: capflake/assets
+          token: ${{ secrets.GH_PAT }}
+          path: assets
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user pipenv
+      - name: Prepare cap-daemon
+        run: |
+          cd cap-daemon
+          pipenv sync
+      - name: Save data
+        run: |
+          cd cap-daemon
+          bin/load_symbol_info --internal_assets_path ../internal-assets --assets_path ../assets
