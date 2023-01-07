@@ -4,6 +4,8 @@ jobs:
   load_mongo:
     name: "Load mongo"
     runs-on: ubuntu-latest
+    env:
+      MONGODB_URL: ${{ secrets.MONGODB_URL }}
     steps:
       - uses: actions/checkout@v3
         with:
