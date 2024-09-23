@@ -1,0 +1,59 @@
+name: "etl"
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 * * * *" # Triggers every 15th minute of every hour.
+env:
+  APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
+  APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
+
+jobs:
+  run_controller:
+    runs-on: ubuntu-latest
+    env:
+      OUTPUT_DIR: ${{ github.workspace }}/bucket
+    outputs:
+      meta: ${{ steps.out.outputs.meta }}
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:run_controller
+      - run: |
+          cd bucket
+          git config user.name capflake-bot
+          git config user.email capflake-bot@users.noreply.github.com
+          git add --all
+          if git diff-index --quiet HEAD --; then
+            echo "No changes to commit. Skipping pull and push."
+          else
+            git commit -m "[AUTO] run_controller $(date)"
+            git pull --rebase && git push --force-with-lease
+          fi
+      - id: out
+        run: echo meta=$(cat $OUTPUT_DIR/controller.json) >> $GITHUB_OUTPUT
+
+  load_sector_data:
+    needs: run_controller
+    if: ${{ fromJSON(needs.run_controller.outputs.meta).load_sector_data.runnable == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
