@@ -42,8 +42,8 @@ jobs:
         run: echo meta=$(cat $OUTPUT_DIR/controller.json) >> $GITHUB_OUTPUT
 
   load_sector_data:
-    needs: run_controller
-    if: ${{ fromJSON(needs.run_controller.outputs.meta).load_sector_data.runnable == true }}
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_sector_data.runnable }}
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
@@ -57,3 +57,245 @@ jobs:
           repository: capflake/bucket
           token: ${{ secrets.GH_PAT }}
           path: bucket
+      - run: cd nebula && bazel run //etl:load_sector_data
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_sector_data $(date)"
+
+  load_index_data:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_index_data.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_index_data
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_index_data $(date)"
+
+  load_ticker_profile:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_ticker_profile.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_profile
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_profile $(date)"
+
+  load_ticker_data:
+    needs: [run_controller, load_ticker_profile]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_ticker_data.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_data
+        env:
+          INPUT_DIR: ${{ github.workspace }}/bucket
+          OUTPUT_DIR: ${{ github.workspace }}/bucket
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_data $(date)"
+
+  load_ticker_screener:
+    # "load_ticker_screener" needs to rely on "load_ticker_data" to avoid
+    # throttling as they use the same source.
+    needs: [run_controller, load_ticker_profile, load_ticker_data]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_ticker_screener.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_screener
+        env:
+          INPUT_DIR: ${{ github.workspace }}/bucket
+          OUTPUT_DIR: ${{ github.workspace }}/bucket
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_screener $(date)"
+
+  load_ticker_financials:
+    needs: [run_controller, load_ticker_profile]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_ticker_financials.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_financials
+        env:
+          INPUT_DIR: ${{ github.workspace }}/bucket
+          OUTPUT_DIR: ${{ github.workspace }}/bucket/ticker_financials
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_financials $(date)"
+
+  load_ticker_logo:
+    needs: [run_controller, load_ticker_profile]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_ticker_logo.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_logo
+        env:
+          INPUT_DIR: ${{ github.workspace }}/bucket
+          OUTPUT_DIR: ${{ github.workspace }}/bucket/ticker_logo
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo $(date)"
+
+  load_ticker_news:
+    needs: [run_controller, load_ticker_profile]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_ticker_news.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_news
+        env:
+          INPUT_DIR: ${{ github.workspace }}/bucket
+          OUTPUT_DIR: ${{ github.workspace }}/bucket
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_news $(date)"
+
+  load_market_calendar:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_market_calendar.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_market_calendar
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket/market_calendar
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_market_calendar $(date)"
+
+  load_economic_calendar:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_economic_calendar.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_economic_calendar
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket/economic_calendar
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_economic_calendar $(date)"
+
+  load_earnings_calendar:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_earnings_calendar.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_earnings_calendar
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket/earnings_calendar
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_earnings_calendar $(date)"
+
+  load_dividends_calendar:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_dividends_calendar.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_dividends_calendar
+        env:
+          OUTPUT_DIR: ${{ github.workspace }}/bucket/dividends_calendar
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_dividends_calendar $(date)"
