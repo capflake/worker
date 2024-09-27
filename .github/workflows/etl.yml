@@ -6,12 +6,11 @@ on:
 env:
   APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
   APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
+  BUCKET_DIR: ${{ github.workspace }}/bucket
 
 jobs:
   run_controller:
     runs-on: ubuntu-latest
-    env:
-      OUTPUT_DIR: ${{ github.workspace }}/bucket
     outputs:
       meta: ${{ steps.out.outputs.meta }}
     steps:
@@ -39,7 +38,7 @@ jobs:
             git pull --rebase && git push --force-with-lease
           fi
       - id: out
-        run: echo meta=$(cat $OUTPUT_DIR/controller.json) >> $GITHUB_OUTPUT
+        run: echo meta=$(cat $BUCKET_DIR/controller.json) >> $GITHUB_OUTPUT
 
   load_sector_data:
     needs: [run_controller]
@@ -58,8 +57,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_sector_data
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_sector_data $(date)"
 
   load_index_data:
@@ -79,8 +76,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_index_data
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_index_data $(date)"
 
   load_ticker_profile:
@@ -100,8 +95,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_profile
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_profile $(date)"
 
   load_ticker_data:
@@ -121,9 +114,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_data
-        env:
-          INPUT_DIR: ${{ github.workspace }}/bucket
-          OUTPUT_DIR: ${{ github.workspace }}/bucket
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_data $(date)"
 
   load_ticker_screener:
@@ -145,9 +135,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_screener
-        env:
-          INPUT_DIR: ${{ github.workspace }}/bucket
-          OUTPUT_DIR: ${{ github.workspace }}/bucket
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_screener $(date)"
 
   load_ticker_financials:
@@ -167,9 +154,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_financials
-        env:
-          INPUT_DIR: ${{ github.workspace }}/bucket
-          OUTPUT_DIR: ${{ github.workspace }}/bucket/ticker_financials
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_financials $(date)"
 
   load_ticker_logo:
@@ -189,9 +173,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_logo
-        env:
-          INPUT_DIR: ${{ github.workspace }}/bucket
-          OUTPUT_DIR: ${{ github.workspace }}/bucket/ticker_logo
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo $(date)"
 
   load_ticker_news:
@@ -211,9 +192,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_news
-        env:
-          INPUT_DIR: ${{ github.workspace }}/bucket
-          OUTPUT_DIR: ${{ github.workspace }}/bucket
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_news $(date)"
 
   load_market_calendar:
@@ -233,8 +211,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_market_calendar
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket/market_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_market_calendar $(date)"
 
   load_economic_calendar:
@@ -254,8 +230,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_economic_calendar
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket/economic_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_economic_calendar $(date)"
 
   load_earnings_calendar:
@@ -275,8 +249,6 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_earnings_calendar
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket/earnings_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_earnings_calendar $(date)"
 
   load_dividends_calendar:
@@ -296,6 +268,4 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_dividends_calendar
-        env:
-          OUTPUT_DIR: ${{ github.workspace }}/bucket/dividends_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_dividends_calendar $(date)"
