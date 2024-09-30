@@ -12,7 +12,9 @@ env:
   REMOTE_CDN_BUCKET_NAME: ${{ secrets.REMOTE_CDN_BUCKET_NAME }}
   REMOTE_CDN_ACCESS_KEY_ID: ${{ secrets.REMOTE_CDN_ACCESS_KEY_ID }}
   REMOTE_CDN_SECRET_ACCESS_KEY: ${{ secrets.REMOTE_CDN_SECRET_ACCESS_KEY }}
-
+concurrency:
+  group: etl
+  cancel-in-progress: false
 jobs:
   run_controller:
     runs-on: ubuntu-latest
