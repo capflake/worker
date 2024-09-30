@@ -182,7 +182,6 @@ jobs:
 
   # This job should always run after `load_ticker_logo`.
   upload_logo_cdn:
-    needs: [load_ticker_logo]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
