@@ -181,7 +181,7 @@ jobs:
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo $(date)"
 
   # This job should always run after `load_ticker_logo`.
-  upload_logo_cdn:
+  load_ticker_logo_remote_cdn:
     needs: [run_controller, load_ticker_logo]
     if: ${{ success() }}
     runs-on: ubuntu-latest
@@ -197,8 +197,8 @@ jobs:
           repository: capflake/bucket
           token: ${{ secrets.GH_PAT }}
           path: bucket
-      - run: cd nebula && bazel run //etl:upload_logo_cdn
-      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] upload_logo_cdn $(date)"
+      - run: cd nebula && bazel run //etl:load_ticker_logo_remote_cdn
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo_remote_cdn $(date)"
 
   load_ticker_news:
     needs: [run_controller, load_ticker_profile]
