@@ -7,6 +7,11 @@ env:
   APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
   APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
   BUCKET_DIR: ${{ github.workspace }}/bucket
+  REMOTE_CDN_PUBLIC_URL: ${{ secrets.REMOTE_CDN_PUBLIC_URL }}
+  REMOTE_CDN_ENDPOINT_URL: ${{ secrets.REMOTE_CDN_ENDPOINT_URL }}
+  REMOTE_CDN_BUCKET_NAME: ${{ secrets.REMOTE_CDN_BUCKET_NAME }}
+  REMOTE_CDN_ACCESS_KEY_ID: ${{ secrets.REMOTE_CDN_ACCESS_KEY_ID }}
+  REMOTE_CDN_SECRET_ACCESS_KEY: ${{ secrets.REMOTE_CDN_SECRET_ACCESS_KEY }}
 
 jobs:
   run_controller:
@@ -174,6 +179,25 @@ jobs:
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_logo
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo $(date)"
+
+  # This job should always run after `load_ticker_logo`.
+  upload_logo_cdn:
+    needs: [load_ticker_logo]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:upload_logo_cdn
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] upload_logo_cdn $(date)"
 
   load_ticker_news:
     needs: [run_controller, load_ticker_profile]
