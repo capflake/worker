@@ -12,6 +12,7 @@ env:
   REMOTE_CDN_BUCKET_NAME: ${{ secrets.REMOTE_CDN_BUCKET_NAME }}
   REMOTE_CDN_ACCESS_KEY_ID: ${{ secrets.REMOTE_CDN_ACCESS_KEY_ID }}
   REMOTE_CDN_SECRET_ACCESS_KEY: ${{ secrets.REMOTE_CDN_SECRET_ACCESS_KEY }}
+  DB_CONNECTION_URL: ${{ secrets.DB_CONNECTION_URL }}
 concurrency:
   group: etl
   cancel-in-progress: false
@@ -315,3 +316,37 @@ jobs:
           path: bucket
       - run: cd nebula && bazel run //etl:load_stock_splits
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_stock_splits $(date)"
+
+  load_database:
+    needs: [
+      run_controller,
+      load_sector_data,
+      load_index_data,
+      load_ticker_profile,
+      load_ticker_data,
+      load_ticker_screener,
+      load_ticker_financials,
+      load_ticker_logo,
+      load_ticker_logo_remote,
+      load_ticker_news,
+      load_market_calendar,
+      load_economic_calendar,
+      load_earnings_calendar,
+      load_dividends_calendar,
+      load_stock_splits,
+    ]
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_database
