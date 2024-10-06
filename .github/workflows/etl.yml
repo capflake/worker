@@ -181,7 +181,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           path: bucket
       - run: cd nebula && bazel run //etl:load_ticker_logo
-      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo $(date)"
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_logo $(date)" --skip_no_changes
 
   # This job should always run after `load_ticker_logo`.
   load_ticker_logo_remote:
