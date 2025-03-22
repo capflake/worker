@@ -17,6 +17,13 @@ concurrency:
   group: etl
   cancel-in-progress: false
 jobs:
+  # Simple job to check supabase project status and keep it active.
+  check_supabase_status:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -H 'Authorization: Bearer ${{ secrets.SUPABASE_API_KEY }}' '${{ secrets.SUPABASE_PROJECT_URL }}/functions/v1/return-ok'
+
   run_controller:
     runs-on: ubuntu-latest
     outputs:
