@@ -1,0 +1,25 @@
+name: "etl_financial_data"
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "25 */12 * * *" # Triggers 2 times every day.
+concurrency:
+  group: etl_financial_data
+  cancel-in-progress: false
+jobs:
+  load_ticker_financials:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_ticker_financials
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_financials $(date)"
