@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "15 */6 * * *" # Triggers 4 times every day.
+env:
+  BUCKET_DIR: ${{ github.workspace }}/bucket
 concurrency:
   group: etl_financial_events
   cancel-in-progress: false
