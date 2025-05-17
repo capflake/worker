@@ -7,15 +7,7 @@ concurrency:
   group: etl_financial_events
   cancel-in-progress: false
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          git config --global user.name capflake-bot
-          git config --global user.email capflake-bot@users.noreply.github.com
-
   load_earnings_calendar:
-    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
@@ -33,7 +25,6 @@ jobs:
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_earnings_calendar $(date)"
 
   load_dividends_calendar:
-    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
@@ -51,7 +42,6 @@ jobs:
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_dividends_calendar $(date)"
 
   load_stock_splits:
-    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1

@@ -9,15 +9,7 @@ concurrency:
   group: etl_financial_data
   cancel-in-progress: false
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          git config --global user.name capflake-bot
-          git config --global user.email capflake-bot@users.noreply.github.com
-
   load_ticker_financials:
-    needs: [setup]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
