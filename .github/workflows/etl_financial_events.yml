@@ -10,6 +10,14 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
+      - run: |
+          git config --global user.name capflake-bot
+          git config --global user.email capflake-bot@users.noreply.github.com
+
+  load_earnings_calendar:
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
       - uses: capflake/setup-bazel@v1
       - uses: actions/checkout@v4
         with:
@@ -21,15 +29,6 @@ jobs:
           repository: capflake/bucket
           token: ${{ secrets.GH_PAT }}
           path: bucket
-      - run: |
-          cd bucket
-          git config user.name capflake-bot
-          git config user.email capflake-bot@users.noreply.github.com
-
-  load_earnings_calendar:
-    needs: [setup]
-    runs-on: ubuntu-latest
-    steps:
       - run: cd nebula && bazel run //etl:load_earnings_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_earnings_calendar $(date)"
 
@@ -37,6 +36,17 @@ jobs:
     needs: [setup]
     runs-on: ubuntu-latest
     steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
       - run: cd nebula && bazel run //etl:load_dividends_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_dividends_calendar $(date)"
 
@@ -44,5 +54,16 @@ jobs:
     needs: [setup]
     runs-on: ubuntu-latest
     steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
       - run: cd nebula && bazel run //etl:load_stock_splits
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_stock_splits $(date)"
