@@ -3,11 +3,13 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "25 */12 * * *" # Triggers 2 times every day.
+env:
+  BUCKET_DIR: ${{ github.workspace }}/bucket
 concurrency:
   group: etl_financial_data
   cancel-in-progress: false
 jobs:
-  load_ticker_financials:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
@@ -21,5 +23,14 @@ jobs:
           repository: capflake/bucket
           token: ${{ secrets.GH_PAT }}
           path: bucket
+      - run: |
+          cd bucket
+          git config user.name capflake-bot
+          git config user.email capflake-bot@users.noreply.github.com
+
+  load_ticker_financials:
+    needs: [setup]
+    runs-on: ubuntu-latest
+    steps:
       - run: cd nebula && bazel run //etl:load_ticker_financials
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_ticker_financials $(date)"
