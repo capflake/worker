@@ -43,8 +43,8 @@ jobs:
       - run: cd nebula && bazel run //etl:run_controller
       - run: |
           cd bucket
-          git config user.name capflake-bot
-          git config user.email capflake-bot@users.noreply.github.com
+          git config --global user.name capflake-bot
+          git config --global user.email capflake-bot@users.noreply.github.com
           git add --all
           if git diff-index --quiet HEAD --; then
             echo "No changes to commit. Skipping pull and push."
