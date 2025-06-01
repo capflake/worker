@@ -27,6 +27,7 @@ jobs:
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_earnings_calendar $(date)"
 
   load_dividends_calendar:
+    needs: [load_earnings_calendar]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
@@ -44,6 +45,7 @@ jobs:
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_dividends_calendar $(date)"
 
   load_stock_splits:
+    needs: [load_dividends_calendar]
     runs-on: ubuntu-latest
     steps:
       - uses: capflake/setup-bazel@v1
