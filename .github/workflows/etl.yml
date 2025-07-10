@@ -2,7 +2,7 @@ name: "etl"
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 * * * *" # Triggers every hour at 15th minute.
+    - cron: "15 */2 * * *" # Triggers every 2nd hour at 15th minute.
 env:
   APCA_API_KEY_ID: ${{ secrets.APCA_API_KEY_ID }}
   APCA_API_SECRET_KEY: ${{ secrets.APCA_API_SECRET_KEY }}
