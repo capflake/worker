@@ -286,6 +286,25 @@ jobs:
       - run: cd nebula && bazel run //etl:load_dividends_calendar
       - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_dividends_calendar $(date)"
 
+  load_stock_splits:
+    needs: [run_controller]
+    if: ${{ !failure() && !cancelled() && fromJSON(needs.run_controller.outputs.meta).load_stock_splits.runnable }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: capflake/setup-bazel@v1
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/nebula
+          token: ${{ secrets.GH_PAT }}
+          path: nebula
+      - uses: actions/checkout@v4
+        with:
+          repository: capflake/bucket
+          token: ${{ secrets.GH_PAT }}
+          path: bucket
+      - run: cd nebula && bazel run //etl:load_stock_splits
+      - run: cd nebula && bazel run //etl:commit_rebase_push -- --git_repo=${{ github.workspace }}/bucket --commit_message="[AUTO] load_stock_splits $(date)"
+
   load_database:
     needs: [
       run_controller,
@@ -301,6 +320,7 @@ jobs:
       load_economic_calendar,
       load_earnings_calendar,
       load_dividends_calendar,
+      load_stock_splits,
     ]
     if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
